@@ -27,8 +27,8 @@ and evaluating forecast error with RMSE.
 Built on the **NOAA hourly weather data for JFK Airport** (Local
 Climatological Data). A sample of this dataset is publicly available through
 the NOAA LCD portal. Saved cell outputs are included so the analysis renders on
-GitHub as-is; to re-run, point the data-loading cell at a local
-`jfk_weather.csv`.
+GitHub as-is; to re-run, place a local `jfk_weather_cleaned.csv` next to the
+notebook.
 
 ## Run it
 
