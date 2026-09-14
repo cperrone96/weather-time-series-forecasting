@@ -1,0 +1,120 @@
+{
+  "data": {
+    "rows": 365,
+    "start": "2017-01-01",
+    "end": "2017-12-31",
+    "observation_unit": "calendar-day mean of valid hourly dry-bulb temperature observations"
+  },
+  "design": {
+    "train_rows": 255,
+    "validation_rows": 54,
+    "test_rows": 56,
+    "test_used_for_model_selection": false,
+    "selection_metric": "validation RMSE",
+    "selected_model": "Fourier-1 + SARIMA(1,0,1)x(1,0,0,7)"
+  },
+  "validation": {
+    "candidates": [
+      {
+        "name": "Fourier-1 + SARIMA(1,0,1)x(1,0,0,7)",
+        "rmse_f": 6.0252,
+        "mae_f": 5.2893
+      },
+      {
+        "name": "Fourier-2 + SARIMA(1,0,1)x(1,0,0,7)",
+        "rmse_f": 7.8222,
+        "mae_f": 6.63
+      }
+    ],
+    "seasonal_naive": {
+      "rmse_f": 7.7213,
+      "mae_f": 6.521
+    }
+  },
+  "rolling_origin_pretest": {
+    "origins": 5,
+    "horizon_days": 7,
+    "rmse_by_horizon": [
+      {
+        "horizon_day": 1,
+        "model_rmse_f": 4.1913,
+        "seasonal_naive_rmse_f": 11.6288
+      },
+      {
+        "horizon_day": 2,
+        "model_rmse_f": 3.5633,
+        "seasonal_naive_rmse_f": 4.1381
+      },
+      {
+        "horizon_day": 3,
+        "model_rmse_f": 3.9931,
+        "seasonal_naive_rmse_f": 6.3922
+      },
+      {
+        "horizon_day": 4,
+        "model_rmse_f": 5.6205,
+        "seasonal_naive_rmse_f": 9.8425
+      },
+      {
+        "horizon_day": 5,
+        "model_rmse_f": 6.7361,
+        "seasonal_naive_rmse_f": 9.7243
+      },
+      {
+        "horizon_day": 6,
+        "model_rmse_f": 5.7775,
+        "seasonal_naive_rmse_f": 8.3209
+      },
+      {
+        "horizon_day": 7,
+        "model_rmse_f": 4.0344,
+        "seasonal_naive_rmse_f": 9.4943
+      }
+    ]
+  },
+  "test": {
+    "selected_model": {
+      "rmse_f": 11.3797,
+      "mae_f": 8.9033,
+      "interval_95_coverage": 0.75,
+      "mean_interval_width_f": 24.6495
+    },
+    "seasonal_naive": {
+      "rmse_f": 20.1036,
+      "mae_f": 16.7479
+    },
+    "horizon_errors": [
+      {
+        "horizon_day": 1,
+        "absolute_error_f": 0.9268
+      },
+      {
+        "horizon_day": 3,
+        "absolute_error_f": 11.2016
+      },
+      {
+        "horizon_day": 7,
+        "absolute_error_f": 15.584
+      },
+      {
+        "horizon_day": 14,
+        "absolute_error_f": 0.3034
+      },
+      {
+        "horizon_day": 28,
+        "absolute_error_f": 3.7192
+      },
+      {
+        "horizon_day": 56,
+        "absolute_error_f": 26.3209
+      }
+    ]
+  },
+  "diagnostics": {
+    "initial_residuals_excluded": 14,
+    "ljung_box_lag": 14,
+    "ljung_box_pvalue": 0.850403,
+    "residual_mean_f": 0.0248,
+    "residual_std_f": 4.6115
+  }
+}

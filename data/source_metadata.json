@@ -1,0 +1,12 @@
+{
+  "dataset": "NOAA Local Climatological Data (LCD), 2017",
+  "station": "JFK INTERNATIONAL AIRPORT, NY US",
+  "station_id": "74486094789",
+  "source_url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2017/74486094789.csv",
+  "retrieved_utc": "2026-09-14",
+  "raw_sha256": "8caa2df61d05802b4cd63195dc882369b5ba012592989217b525bf70265f98e8",
+  "raw_rows": 13380,
+  "valid_temperature_observations": 13001,
+  "clean_rows": 365,
+  "transformation": "Numeric hourly dry-bulb observations aggregated to calendar-day arithmetic means; missing/non-numeric hourly values excluded; no daily values imputed."
+}
