@@ -90,3 +90,4 @@ def test_source_metadata_records_exact_lineage() -> None:
     assert metadata["station_id"] == "74486094789"
     assert metadata["raw_sha256"] == "8caa2df61d05802b4cd63195dc882369b5ba012592989217b525bf70265f98e8"
     assert metadata["clean_rows"] == 365
+    assert metadata["minimum_valid_hourly_observations_per_day"] == 20

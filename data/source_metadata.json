@@ -8,5 +8,6 @@
   "raw_rows": 13380,
   "valid_temperature_observations": 13001,
   "clean_rows": 365,
+  "minimum_valid_hourly_observations_per_day": 20,
   "transformation": "Numeric hourly dry-bulb observations aggregated to calendar-day arithmetic means; missing/non-numeric hourly values excluded; no daily values imputed."
 }
