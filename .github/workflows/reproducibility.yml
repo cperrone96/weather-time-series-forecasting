@@ -11,12 +11,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
-      - run: python -m pip install --upgrade pip
       - run: python -m pip install -r requirements.txt
       - run: python run_analysis.py
-      - run: python -m pytest -q
+      - run: pytest -q
       - run: >-
           jupyter nbconvert --to notebook --execute weather_forecasting_sarimax.ipynb
           --output /tmp/weather_forecasting_sarimax.executed.ipynb

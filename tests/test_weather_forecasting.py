@@ -9,85 +9,115 @@ import pytest
 
 from weather_forecasting import (
     DATA_COLUMNS,
-    build_lagged_features,
-    diagnostic_pairs,
+    SarimaxSpec,
+    actuals,
+    climatology,
+    diebold_mariano,
+    evaluation_origins,
+    fit_climatology,
+    fit_sarimax,
+    holm_adjust,
     load_temperature_series,
+    persistence,
+    sarimax_rolling,
     seasonal_naive,
-    split_series,
+    split_by_year,
 )
 
-
 ROOT = Path(__file__).resolve().parents[1]
-DATA_PATH = ROOT / "data" / "jfk_daily_temperature_2017.csv"
+DATA_PATH = ROOT / "data" / "jfk_daily_temperature_2013_2019.csv"
 
 
-def test_checked_in_dataset_has_expected_contract() -> None:
+@pytest.fixture(scope="module")
+def series() -> pd.Series:
+    return load_temperature_series(DATA_PATH)
+
+
+def _synthetic(days: int = 3 * 365, seed: int = 0) -> pd.Series:
+    rng = np.random.default_rng(seed)
+    index = pd.date_range("2013-01-01", periods=days, freq="D")
+    noise = np.zeros(days)
+    for t in range(1, days):
+        noise[t] = 0.6 * noise[t - 1] + rng.normal(0, 3)
+    seasonal = 55 - 20 * np.cos(2 * np.pi * (index - index[0]).days / 365.2425)
+    return pd.Series(seasonal + noise, index=index)
+
+
+def test_checked_in_dataset_contract(series):
     frame = pd.read_csv(DATA_PATH)
     assert list(frame.columns) == DATA_COLUMNS
-    assert len(frame) == 365
-    assert frame["date"].is_unique
-    assert frame["mean_dry_bulb_temp_f"].notna().all()
     assert frame["observation_count"].min() >= 20
-
-    series = load_temperature_series(DATA_PATH)
-    assert series.index.is_monotonic_increasing
-    assert series.index.freqstr == "D"
-    assert np.isfinite(series).all()
+    assert series.index.freqstr == "D" and len(series) == 2556
+    assert series.index[0] == pd.Timestamp("2013-01-01") and series.index[-1] == pd.Timestamp("2019-12-31")
 
 
-def test_chronological_split_is_disjoint_and_ordered() -> None:
-    series = load_temperature_series(DATA_PATH)
-    train, validation, test = split_series(series)
-
+def test_year_split_is_ordered_and_complete(series):
+    train, validation, test = split_by_year(series, 2018, 2019)
+    assert train.index.max() < validation.index.min() and validation.index.max() < test.index.min()
     assert len(train) + len(validation) + len(test) == len(series)
-    assert train.index.max() < validation.index.min() < test.index.min()
-    assert set(train.index).isdisjoint(validation.index)
-    assert set(train.index).isdisjoint(test.index)
-    assert set(validation.index).isdisjoint(test.index)
+    assert set(test.index.year) == {2019}
 
 
-def test_lagged_features_exclude_contemporaneous_target() -> None:
-    series = pd.Series(
-        np.arange(20.0), index=pd.date_range("2024-01-01", periods=20, freq="D")
-    )
-    features = build_lagged_features(series)
-
-    target_day = features.index[-1]
-    assert features.loc[target_day, "lag_1"] == series.shift(1).loc[target_day]
-    assert features.loc[target_day, "rolling_mean_7"] == series.shift(1).rolling(7).mean().loc[target_day]
-    assert features.loc[target_day, "rolling_mean_7"] != series.rolling(7).mean().loc[target_day]
+def test_origins_keep_every_target_inside_the_period(series):
+    _, validation, _ = split_by_year(series, 2018, 2019)
+    origins = evaluation_origins(series, validation, 7)
+    assert origins[0] == pd.Timestamp("2017-12-31")
+    assert origins[-1] + pd.Timedelta(days=7) == pd.Timestamp("2018-12-31")
 
 
-def test_seasonal_naive_repeats_only_observed_history() -> None:
-    history = pd.Series(np.arange(14.0))
-    forecast = seasonal_naive(history, horizon=10, season=7)
-    assert forecast.tolist() == [7, 8, 9, 10, 11, 12, 13, 7, 8, 9]
+def test_baselines_use_only_past_values():
+    s = pd.Series(np.arange(800.0), index=pd.date_range("2013-01-01", periods=800, freq="D"))
+    origins = s.index[[400, 500]]
+    assert persistence(s, origins, 3).mean.tolist() == [[400.0] * 3, [500.0] * 3]
+    assert seasonal_naive(s, origins, 3).mean.tolist() == [[36.0, 37.0, 38.0], [136.0, 137.0, 138.0]]
+    assert actuals(s, origins, 2).tolist() == [[401.0, 402.0], [501.0, 502.0]]
 
 
-def test_diagnostic_pairs_exclude_burn_in_and_remain_aligned() -> None:
-    fitted = pd.Series(np.arange(20.0), index=pd.date_range("2024-01-01", periods=20))
-    residuals = pd.Series(np.arange(100.0, 120.0), index=fitted.index)
-    pairs = diagnostic_pairs(fitted, residuals, burn=5)
-    assert len(pairs) == 15
-    assert pairs.iloc[0].to_dict() == {"fitted": 5.0, "residual": 105.0}
+def test_sarimax_rolling_forecasts_never_see_the_future():
+    s = _synthetic()
+    spec = SarimaxSpec(1, (1, 0, 0))
+    train = s.iloc[: 2 * 365]
+    result, converged = fit_sarimax(train, spec)
+    assert converged
+    origins = s.index[800:810]
+    clean = sarimax_rolling(result, spec, s, origins, 7)
+    tampered = s.copy()
+    tampered.iloc[811:] += 50  # change only values after the first origin's targets begin
+    changed = sarimax_rolling(result, spec, tampered, origins, 7)
+    assert np.allclose(clean.mean[0], changed.mean[0])  # origin day 800: all targets <= 807 are forecasts, inputs <= 800
+    assert np.all(clean.lower < clean.mean) and np.all(clean.mean < clean.upper)
 
 
-def test_checked_in_metrics_capture_holdout_and_uncertainty() -> None:
+def test_sarimax_beats_climatology_one_day_ahead_on_autocorrelated_data():
+    s = _synthetic(days=4 * 365, seed=1)
+    train = s.iloc[: 3 * 365]
+    spec = SarimaxSpec(1, (1, 0, 0))
+    result, _ = fit_sarimax(train, spec)
+    origins = s.index[3 * 365 : 4 * 365 - 7]
+    observed = actuals(s, origins, 7)
+    sar = sarimax_rolling(result, spec, s, origins, 7)
+    clim = climatology(fit_climatology(train, 1), 1, origins, 7)
+    sar_rmse = np.sqrt(((observed - sar.mean) ** 2).mean(axis=0))
+    clim_rmse = np.sqrt(((observed - clim.mean) ** 2).mean(axis=0))
+    assert sar_rmse[0] < 0.9 * clim_rmse[0]
+    assert abs(sar_rmse[6] - clim_rmse[6]) < 0.1 * clim_rmse[6]  # AR(0.6) memory is gone after a week
+
+
+def test_diebold_mariano_detects_a_clearly_better_forecast():
+    rng = np.random.default_rng(2)
+    small, large = rng.normal(0, 1, 300), rng.normal(0, 2, 300)
+    assert diebold_mariano(small, large, 1)["p_value"] < 0.001
+    a, b = rng.normal(0, 1, 300), rng.normal(0, 1, 300)
+    assert diebold_mariano(a, b, 1)["p_value"] > 0.05  # equal accuracy: no rejection for this seed
+
+
+def test_holm_adjustment():
+    assert holm_adjust([0.01, 0.04, 0.03]) == pytest.approx([0.03, 0.06, 0.06])
+
+
+def test_committed_results_follow_the_selection_protocol():
     metrics = json.loads((ROOT / "outputs" / "metrics.json").read_text())
-
-    assert metrics["data"]["rows"] == 365
-    assert metrics["design"]["test_used_for_model_selection"] is False
-    assert metrics["test"]["selected_model"]["rmse_f"] > 0
-    assert metrics["test"]["seasonal_naive"]["rmse_f"] > 0
-    assert metrics["test"]["selected_model"]["rmse_f"] == pytest.approx(11.3797, abs=0.05)
-    assert metrics["test"]["selected_model"]["rmse_f"] < metrics["test"]["seasonal_naive"]["rmse_f"]
-    assert 0 <= metrics["test"]["selected_model"]["interval_95_coverage"] <= 1
-    assert metrics["diagnostics"]["ljung_box_lag"] >= 7
-
-
-def test_source_metadata_records_exact_lineage() -> None:
-    metadata = json.loads((ROOT / "data" / "source_metadata.json").read_text())
-    assert metadata["station_id"] == "74486094789"
-    assert metadata["raw_sha256"] == "8caa2df61d05802b4cd63195dc882369b5ba012592989217b525bf70265f98e8"
-    assert metadata["clean_rows"] == 365
-    assert metadata["minimum_valid_hourly_observations_per_day"] == 20
+    converged = [c for c in metrics["validation"]["sarimax_candidates"] if c["converged"]]
+    best = min(converged, key=lambda c: c["mean_rmse_f"])
+    assert metrics["selected"]["model"] == best["model"]
+    assert metrics["design"]["test_year"] > metrics["design"]["validation_year"]

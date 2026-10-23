@@ -1,13 +1,55 @@
 {
-  "dataset": "NOAA Local Climatological Data (LCD), 2017",
+  "dataset": "NOAA Local Climatological Data (LCD), 2013-2019",
   "station": "JFK INTERNATIONAL AIRPORT, NY US",
   "station_id": "74486094789",
-  "source_url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2017/74486094789.csv",
-  "retrieved_utc": "2026-09-14",
-  "raw_sha256": "8caa2df61d05802b4cd63195dc882369b5ba012592989217b525bf70265f98e8",
-  "raw_rows": 13380,
-  "valid_temperature_observations": 13001,
-  "clean_rows": 365,
+  "checksums_recorded_utc": "2026-10-23",
+  "sources": [
+    {
+      "year": 2013,
+      "url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2013/74486094789.csv",
+      "sha256": "99a7a60432a97df672971e442e69e2ff8b1f7288494299c844efa58dcd66f91b",
+      "rows": 13450
+    },
+    {
+      "year": 2014,
+      "url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2014/74486094789.csv",
+      "sha256": "14cbae8e10eac00f5ae1b3032e32f1c70f6471a326239a10354f6eb7fcab96fc",
+      "rows": 13382
+    },
+    {
+      "year": 2015,
+      "url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2015/74486094789.csv",
+      "sha256": "f80ea2eb204c9b1a459d4f4b80dc1acb57a03fc8039d343759bc61c3c1e3820b",
+      "rows": 13360
+    },
+    {
+      "year": 2016,
+      "url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2016/74486094789.csv",
+      "sha256": "f2dd990d35ee90917c019c31e1f22d5ef14139b4e855baa7724c1e18a23882bd",
+      "rows": 13070
+    },
+    {
+      "year": 2017,
+      "url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2017/74486094789.csv",
+      "sha256": "8caa2df61d05802b4cd63195dc882369b5ba012592989217b525bf70265f98e8",
+      "rows": 13380
+    },
+    {
+      "year": 2018,
+      "url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2018/74486094789.csv",
+      "sha256": "568670875fb666939bf6fe3b70bc830bf1b4c00b8421ff9e33336682407b7929",
+      "rows": 13699
+    },
+    {
+      "year": 2019,
+      "url": "https://www.ncei.noaa.gov/data/local-climatological-data/access/2019/74486094789.csv",
+      "sha256": "84d448f0509ed2e239edcebc0fe1be9ac6d1ed098dc2834d89cb54323ea36cc4",
+      "rows": 13471
+    }
+  ],
+  "raw_rows": 93812,
+  "routine_hourly_observations": 61341,
+  "clean_rows": 2556,
   "minimum_valid_hourly_observations_per_day": 20,
-  "transformation": "Numeric hourly dry-bulb observations aggregated to calendar-day arithmetic means; missing/non-numeric hourly values excluded; no daily values imputed."
+  "transformation": "Routine hourly reports (FM-15, SY-MT), one per clock hour, with numeric dry-bulb temperature; calendar-day arithmetic mean; no daily values imputed."
 }

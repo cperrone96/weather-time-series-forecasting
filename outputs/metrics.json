@@ -1,120 +1,610 @@
 {
   "data": {
-    "rows": 365,
-    "start": "2017-01-01",
-    "end": "2017-12-31",
-    "observation_unit": "calendar-day mean of valid hourly dry-bulb temperature observations"
+    "days": 2556,
+    "start": "2013-01-01",
+    "end": "2019-12-31",
+    "unit": "calendar-day mean of routine hourly dry-bulb temperature, \u00b0F"
   },
   "design": {
-    "train_rows": 255,
-    "validation_rows": 54,
-    "test_rows": 56,
-    "test_used_for_model_selection": false,
-    "selection_metric": "validation RMSE",
-    "selected_model": "Fourier-1 + SARIMA(1,0,1)x(1,0,0,7)"
+    "train_years": [
+      2013,
+      2017
+    ],
+    "validation_year": 2018,
+    "test_year": 2019,
+    "horizon_days": 7,
+    "validation_origins": 359,
+    "test_origins": 359,
+    "parameters": "estimated once per stage (training years for validation, 2013-2018 for test), then fixed while the origin rolls daily",
+    "selection_metric": "validation RMSE averaged over horizons 1-7, among converged fits"
   },
   "validation": {
-    "candidates": [
+    "sarimax_candidates": [
       {
-        "name": "Fourier-1 + SARIMA(1,0,1)x(1,0,0,7)",
-        "rmse_f": 6.0252,
-        "mae_f": 5.2893
+        "model": "Fourier K=1 + ARMA(1,0) errors",
+        "harmonics": 1,
+        "order": [
+          1,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.1102,
+          6.3366,
+          6.4262,
+          6.4243,
+          6.4669,
+          6.4121,
+          6.3191
+        ],
+        "mean_rmse_f": 6.2136
       },
       {
-        "name": "Fourier-2 + SARIMA(1,0,1)x(1,0,0,7)",
-        "rmse_f": 7.8222,
-        "mae_f": 6.63
+        "model": "Fourier K=1 + ARMA(2,0) errors",
+        "harmonics": 1,
+        "order": [
+          2,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.0447,
+          6.3452,
+          6.4785,
+          6.5257,
+          6.5713,
+          6.4934,
+          6.374
+        ],
+        "mean_rmse_f": 6.2618
+      },
+      {
+        "model": "Fourier K=1 + ARMA(3,0) errors",
+        "harmonics": 1,
+        "order": [
+          3,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          4.9631,
+          6.2246,
+          6.3646,
+          6.4026,
+          6.4507,
+          6.3995,
+          6.3147
+        ],
+        "mean_rmse_f": 6.16
+      },
+      {
+        "model": "Fourier K=1 + ARMA(1,1) errors",
+        "harmonics": 1,
+        "order": [
+          1,
+          0,
+          1
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.0064,
+          6.3099,
+          6.46,
+          6.5112,
+          6.5579,
+          6.4834,
+          6.3685
+        ],
+        "mean_rmse_f": 6.2425
+      },
+      {
+        "model": "Fourier K=1 + ARMA(2,1) errors",
+        "harmonics": 1,
+        "order": [
+          2,
+          0,
+          1
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.0003,
+          6.2917,
+          6.4383,
+          6.4778,
+          6.5295,
+          6.4636,
+          6.357
+        ],
+        "mean_rmse_f": 6.2226
+      },
+      {
+        "model": "Fourier K=2 + ARMA(1,0) errors",
+        "harmonics": 2,
+        "order": [
+          1,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.1133,
+          6.3433,
+          6.4364,
+          6.437,
+          6.4809,
+          6.4271,
+          6.3343
+        ],
+        "mean_rmse_f": 6.2246
+      },
+      {
+        "model": "Fourier K=2 + ARMA(2,0) errors",
+        "harmonics": 2,
+        "order": [
+          2,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.049,
+          6.3555,
+          6.4936,
+          6.5429,
+          6.5888,
+          6.5108,
+          6.3909
+        ],
+        "mean_rmse_f": 6.2759
+      },
+      {
+        "model": "Fourier K=2 + ARMA(3,0) errors",
+        "harmonics": 2,
+        "order": [
+          3,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          4.9663,
+          6.2326,
+          6.3755,
+          6.4151,
+          6.4645,
+          6.4143,
+          6.3297
+        ],
+        "mean_rmse_f": 6.1711
+      },
+      {
+        "model": "Fourier K=2 + ARMA(1,1) errors",
+        "harmonics": 2,
+        "order": [
+          1,
+          0,
+          1
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.0107,
+          6.3206,
+          6.4752,
+          6.5283,
+          6.5755,
+          6.5012,
+          6.386
+        ],
+        "mean_rmse_f": 6.2568
+      },
+      {
+        "model": "Fourier K=2 + ARMA(2,1) errors",
+        "harmonics": 2,
+        "order": [
+          2,
+          0,
+          1
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.0043,
+          6.3014,
+          6.4519,
+          6.4936,
+          6.5462,
+          6.4808,
+          6.3742
+        ],
+        "mean_rmse_f": 6.2361
+      },
+      {
+        "model": "Fourier K=3 + ARMA(1,0) errors",
+        "harmonics": 3,
+        "order": [
+          1,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.1232,
+          6.3636,
+          6.4689,
+          6.4783,
+          6.5273,
+          6.4777,
+          6.3874
+        ],
+        "mean_rmse_f": 6.2609
+      },
+      {
+        "model": "Fourier K=3 + ARMA(2,0) errors",
+        "harmonics": 3,
+        "order": [
+          2,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.0622,
+          6.3873,
+          6.5417,
+          6.5984,
+          6.6458,
+          6.5686,
+          6.4486
+        ],
+        "mean_rmse_f": 6.3218
+      },
+      {
+        "model": "Fourier K=3 + ARMA(3,0) errors",
+        "harmonics": 3,
+        "order": [
+          3,
+          0,
+          0
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          4.9768,
+          6.2581,
+          6.4111,
+          6.4567,
+          6.511,
+          6.4651,
+          6.3827
+        ],
+        "mean_rmse_f": 6.2088
+      },
+      {
+        "model": "Fourier K=3 + ARMA(1,1) errors",
+        "harmonics": 3,
+        "order": [
+          1,
+          0,
+          1
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.0239,
+          6.3537,
+          6.5228,
+          6.5824,
+          6.6314,
+          6.5587,
+          6.444
+        ],
+        "mean_rmse_f": 6.3024
+      },
+      {
+        "model": "Fourier K=3 + ARMA(2,1) errors",
+        "harmonics": 3,
+        "order": [
+          2,
+          0,
+          1
+        ],
+        "converged": true,
+        "rmse_by_horizon_f": [
+          5.0165,
+          6.3317,
+          6.4952,
+          6.545,
+          6.6006,
+          6.5376,
+          6.4321
+        ],
+        "mean_rmse_f": 6.2798
       }
     ],
-    "seasonal_naive": {
-      "rmse_f": 7.7213,
-      "mae_f": 6.521
+    "climatology_harmonics_rmse_f": {
+      "1": 6.593837389910137,
+      "2": 6.6132604439981355,
+      "3": 6.674094358051787
+    },
+    "baselines_rmse_by_horizon_f": {
+      "persistence": [
+        5.66,
+        7.8407,
+        8.331,
+        8.3603,
+        8.4326,
+        8.4957,
+        8.5742
+      ],
+      "seasonal_naive": [
+        9.0085,
+        8.8802,
+        8.8675,
+        8.9717,
+        9.0476,
+        9.0269,
+        9.0556
+      ],
+      "climatology": [
+        6.768,
+        6.6644,
+        6.6115,
+        6.6111,
+        6.6115,
+        6.51,
+        6.3804
+      ]
     }
   },
-  "rolling_origin_pretest": {
-    "origins": 5,
-    "horizon_days": 7,
-    "rmse_by_horizon": [
-      {
-        "horizon_day": 1,
-        "model_rmse_f": 4.1913,
-        "seasonal_naive_rmse_f": 11.6288
-      },
-      {
-        "horizon_day": 2,
-        "model_rmse_f": 3.5633,
-        "seasonal_naive_rmse_f": 4.1381
-      },
-      {
-        "horizon_day": 3,
-        "model_rmse_f": 3.9931,
-        "seasonal_naive_rmse_f": 6.3922
-      },
-      {
-        "horizon_day": 4,
-        "model_rmse_f": 5.6205,
-        "seasonal_naive_rmse_f": 9.8425
-      },
-      {
-        "horizon_day": 5,
-        "model_rmse_f": 6.7361,
-        "seasonal_naive_rmse_f": 9.7243
-      },
-      {
-        "horizon_day": 6,
-        "model_rmse_f": 5.7775,
-        "seasonal_naive_rmse_f": 8.3209
-      },
-      {
-        "horizon_day": 7,
-        "model_rmse_f": 4.0344,
-        "seasonal_naive_rmse_f": 9.4943
-      }
-    ]
+  "selected": {
+    "model": "Fourier K=1 + ARMA(3,0) errors",
+    "harmonics": 1,
+    "order": [
+      3,
+      0,
+      0
+    ],
+    "climatology_harmonics": 1,
+    "final_fit_converged": true
   },
   "test": {
-    "selected_model": {
-      "rmse_f": 11.3797,
-      "mae_f": 8.9033,
-      "interval_95_coverage": 0.75,
-      "mean_interval_width_f": 24.6495
+    "rmse_by_horizon_f": {
+      "sarimax": [
+        4.9001,
+        5.8178,
+        5.91,
+        5.8472,
+        5.8596,
+        5.8789,
+        5.8595
+      ],
+      "persistence": [
+        5.6741,
+        7.6436,
+        8.0687,
+        7.8576,
+        8.0825,
+        8.4519,
+        8.4826
+      ],
+      "seasonal_naive": [
+        9.0531,
+        8.8429,
+        8.8038,
+        8.753,
+        8.7174,
+        8.5664,
+        8.4016
+      ],
+      "climatology": [
+        5.8796,
+        5.8327,
+        5.8664,
+        5.8781,
+        5.8762,
+        5.862,
+        5.8564
+      ]
     },
-    "seasonal_naive": {
-      "rmse_f": 20.1036,
-      "mae_f": 16.7479
+    "mae_by_horizon_f": {
+      "sarimax": [
+        3.7023,
+        4.3811,
+        4.5324,
+        4.5089,
+        4.4934,
+        4.4922,
+        4.47
+      ],
+      "persistence": [
+        4.2974,
+        5.6678,
+        6.1027,
+        5.9904,
+        6.1865,
+        6.3223,
+        6.4248
+      ],
+      "seasonal_naive": [
+        6.8861,
+        6.7921,
+        6.7654,
+        6.7259,
+        6.6996,
+        6.6292,
+        6.5443
+      ],
+      "climatology": [
+        4.4836,
+        4.4546,
+        4.4836,
+        4.4931,
+        4.4909,
+        4.4797,
+        4.4743
+      ]
     },
-    "horizon_errors": [
+    "skill_vs_climatology_by_horizon": [
+      0.1666,
+      0.0026,
+      -0.0074,
+      0.0053,
+      0.0028,
+      -0.0029,
+      -0.0005
+    ],
+    "skill_vs_persistence_by_horizon": [
+      0.1364,
+      0.2389,
+      0.2675,
+      0.2558,
+      0.275,
+      0.3044,
+      0.3092
+    ],
+    "sarimax_interval_95_coverage_by_horizon": [
+      0.9443,
+      0.961,
+      0.9582,
+      0.9666,
+      0.9721,
+      0.9694,
+      0.9721
+    ],
+    "sarimax_interval_95_mean_width_by_horizon_f": [
+      19.3896,
+      24.5283,
+      25.4397,
+      25.7658,
+      26.0045,
+      26.1356,
+      26.1907
+    ],
+    "sarimax_interval_95_coverage_by_season": {
+      "Dec-Feb": 0.9218,
+      "Mar-May": 0.9705,
+      "Jun-Aug": 1.0,
+      "Sep-Nov": 0.9576
+    },
+    "diebold_mariano": [
       {
+        "versus": "persistence",
         "horizon_day": 1,
-        "absolute_error_f": 0.9268
+        "statistic": -5.626,
+        "p_value": 3.729e-08,
+        "mean_loss_difference": -8.185,
+        "holm_adjusted_p_value": 4.848e-07
       },
       {
+        "versus": "persistence",
+        "horizon_day": 2,
+        "statistic": -6.065,
+        "p_value": 3.359e-09,
+        "mean_loss_difference": -24.58,
+        "holm_adjusted_p_value": 4.703e-08
+      },
+      {
+        "versus": "persistence",
         "horizon_day": 3,
-        "absolute_error_f": 11.2016
+        "statistic": -5.431,
+        "p_value": 1.037e-07,
+        "mean_loss_difference": -30.18,
+        "holm_adjusted_p_value": 1.244e-06
       },
       {
+        "versus": "persistence",
+        "horizon_day": 4,
+        "statistic": -4.466,
+        "p_value": 1.072e-05,
+        "mean_loss_difference": -27.55,
+        "holm_adjusted_p_value": 9.648e-05
+      },
+      {
+        "versus": "persistence",
+        "horizon_day": 5,
+        "statistic": -4.373,
+        "p_value": 1.61e-05,
+        "mean_loss_difference": -30.99,
+        "holm_adjusted_p_value": 0.0001288
+      },
+      {
+        "versus": "persistence",
+        "horizon_day": 6,
+        "statistic": -4.567,
+        "p_value": 6.803e-06,
+        "mean_loss_difference": -36.87,
+        "holm_adjusted_p_value": 6.803e-05
+      },
+      {
+        "versus": "persistence",
         "horizon_day": 7,
-        "absolute_error_f": 15.584
+        "statistic": -4.733,
+        "p_value": 3.197e-06,
+        "mean_loss_difference": -37.62,
+        "holm_adjusted_p_value": 3.517e-05
       },
       {
-        "horizon_day": 14,
-        "absolute_error_f": 0.3034
+        "versus": "climatology",
+        "horizon_day": 1,
+        "statistic": -4.097,
+        "p_value": 5.187e-05,
+        "mean_loss_difference": -10.56,
+        "holm_adjusted_p_value": 0.0003631
       },
       {
-        "horizon_day": 28,
-        "absolute_error_f": 3.7192
+        "versus": "climatology",
+        "horizon_day": 2,
+        "statistic": -0.1139,
+        "p_value": 0.9094,
+        "mean_loss_difference": -0.1736,
+        "holm_adjusted_p_value": 1.0
       },
       {
-        "horizon_day": 56,
-        "absolute_error_f": 26.3209
+        "versus": "climatology",
+        "horizon_day": 3,
+        "statistic": 0.4208,
+        "p_value": 0.6742,
+        "mean_loss_difference": 0.5132,
+        "holm_adjusted_p_value": 1.0
+      },
+      {
+        "versus": "climatology",
+        "horizon_day": 4,
+        "statistic": -0.3285,
+        "p_value": 0.7427,
+        "mean_loss_difference": -0.3621,
+        "holm_adjusted_p_value": 1.0
+      },
+      {
+        "versus": "climatology",
+        "horizon_day": 5,
+        "statistic": -0.2299,
+        "p_value": 0.8183,
+        "mean_loss_difference": -0.1953,
+        "holm_adjusted_p_value": 1.0
+      },
+      {
+        "versus": "climatology",
+        "horizon_day": 6,
+        "statistic": 0.3817,
+        "p_value": 0.7029,
+        "mean_loss_difference": 0.1985,
+        "holm_adjusted_p_value": 1.0
+      },
+      {
+        "versus": "climatology",
+        "horizon_day": 7,
+        "statistic": 0.1154,
+        "p_value": 0.9082,
+        "mean_loss_difference": 0.0368,
+        "holm_adjusted_p_value": 1.0
       }
     ]
   },
   "diagnostics": {
-    "initial_residuals_excluded": 14,
-    "ljung_box_lag": 14,
-    "ljung_box_pvalue": 0.850403,
-    "residual_mean_f": 0.0248,
-    "residual_std_f": 4.6115
+    "residuals_excluded_for_burn_in": 30,
+    "ljung_box_pvalue_lag7": 0.605595,
+    "ljung_box_pvalue_lag14": 0.35814,
+    "residual_std_f": 4.9312
   }
 }

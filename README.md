@@ -1,112 +1,69 @@
-# JFK Weather Forecasting: Time-Ordered Evaluation
+# Forecasting Daily Temperature at JFK Airport
 
-An independently remediated time-series portfolio project that forecasts the
-**daily mean dry-bulb temperature at JFK Airport**. The analysis demonstrates
-data provenance, leakage-safe model selection, expanding-window evaluation,
-an untouched test period, forecast intervals, and residual diagnostics.
+How many days ahead can a statistical time-series model forecast daily mean temperature better than simple rules of thumb? This project answers that for New York's JFK Airport with seven years of NOAA observations, a SARIMAX model and a rolling-origin evaluation against persistence, seasonal-naive and climatology baselines. The answer sets realistic expectations for any demand, staffing or energy plan that leans on temperature forecasts.
 
-![Observed temperatures, forecasts, and model intervals](figures/test_forecast.png)
+## Key results
 
-## Question and decision context
+Test year 2019, scored once: 359 forecast origins, each forecasting 1 to 7 days ahead using only data available that day. RMSE in °F (lower is better).
 
-How accurately can a small dynamic-regression model forecast future daily mean
-temperature, relative to a transparent seven-day seasonal-naive benchmark?
-This is an educational demonstration of forecast evaluation. It is not an
-operational weather-warning system and should not be used for safety decisions.
+| Method | 1 day ahead | 3 days | 7 days |
+|---|---|---|---|
+| Seasonal naive (same day last year) | 9.05 | 8.80 | 8.40 |
+| Persistence (tomorrow equals today) | 5.67 | 8.07 | 8.48 |
+| Climatology (long-run mean for the date) | 5.88 | 5.87 | 5.86 |
+| **SARIMAX: annual Fourier terms + AR(3) errors** | **4.90** | **5.91** | **5.86** |
 
-## Data contract and provenance
+- **One day ahead**, SARIMAX cuts RMSE by 17% against climatology and 14% against persistence (Diebold-Mariano, Holm-adjusted p < 0.001 for both).
+- **From two days ahead** it is indistinguishable from climatology (adjusted p = 1.0 at every horizon from 2 to 7) while still beating persistence at every horizon. Day-to-day weather memory in daily means fades within about two days.
+- **Calibrated intervals:** nominal 95% prediction intervals cover 94.4% of outcomes one day ahead and 96% to 97% at longer horizons. Coverage is 92% in winter and 100% in summer: weather is more variable in winter than the model's single variance assumes.
 
-- **Source:** [NOAA/NCEI Local Climatological Data](https://www.ncei.noaa.gov/products/land-based-station/local-climatological-data), station `74486094789` (JFK International Airport), calendar year 2017.
-- **Versioned file:** `https://www.ncei.noaa.gov/data/local-climatological-data/access/2017/74486094789.csv`
-- **Retrieved:** 2026-09-14 UTC.
-- **Raw SHA-256:** `8caa2df61d05802b4cd63195dc882369b5ba012592989217b525bf70265f98e8`.
-- **Observation unit:** one calendar-day arithmetic mean of valid hourly dry-bulb temperature observations.
-- **Transformation:** nonnumeric/missing hourly target values are excluded; valid readings are aggregated by day. No daily target is imputed. The checked-in table has 365 complete, unique, ordered days and at least 20 valid observations per day.
-- **Use:** U.S. government public data. See NOAA's site for dataset documentation and attribution guidance.
+![RMSE by horizon and one-day-ahead forecasts for early 2019](figures/test_forecast.png)
 
-Exact lineage and row counts are recorded in
-[`data/source_metadata.json`](data/source_metadata.json). Rebuild the checked-in
-table from the archived NOAA file with:
+## Approach
 
-```bash
-python scripts/prepare_noaa_data.py
+- **Year-based train/validation/test split.** Parameters are estimated on 2013 to 2017, the model specification is chosen on 2018, and 2019 is used once for the final evaluation, after refitting on 2013 to 2018.
+- **Rolling-origin evaluation.** From every day of the evaluation year, each method forecasts 1 to 7 days ahead. Parameters stay fixed while the Kalman filter absorbs each new observation, so forecasts never use future data (a unit test checks this by tampering with future values).
+- **Dynamic regression (SARIMAX).** Annual seasonality enters as Fourier sine/cosine terms and short-term weather persistence as ARMA errors. Fifteen candidates (1 to 3 harmonics, five ARMA orders) were compared on 2018 by RMSE averaged over horizons. Fits that don't converge are excluded; all fifteen converged.
+- **Meaningful baselines.** Persistence, a 365-day seasonal naive and a Fourier climatology (harmonics also chosen on 2018). An earlier version used a 7-day seasonal naive and a weekly seasonal AR term, which were dropped: daily temperature has no weekly cycle.
+- **Forecast comparison with proper inference.** Diebold-Mariano tests with the Harvey-Leybourne-Newbold correction and a variance that accounts for overlapping multi-day errors, Holm-adjusted across all 14 comparisons. Skill scores against climatology and persistence.
+- **Diagnostics.** Interval coverage by horizon and season, Ljung-Box tests (lag 14 p = 0.36) and a Q-Q plot of the final model's residuals ([figures/residual_diagnostics.png](figures/residual_diagnostics.png)).
+
+## Data
+
+- **Source:** NOAA National Centers for Environmental Information, [Local Climatological Data](https://www.ncei.noaa.gov/products/land-based-station/local-climatological-data), station 74486094789 (JFK International Airport, NY), yearly files for 2013 to 2019. U.S. government data, free to use.
+- **Unit of analysis:** one calendar day, January 1, 2013 to December 31, 2019 (2,556 days). The value is the mean dry-bulb temperature (°F) of the routine hourly reports, one per clock hour (61,341 hourly readings). Special reports, which cluster in bad weather, and duplicate synoptic reports are excluded so they don't over-weight particular hours. Every day has at least 23 valid hourly readings; nothing is imputed.
+- `scripts/prepare_noaa_data.py` downloads the seven source files, verifies their SHA-256 checksums and rebuilds `data/jfk_daily_temperature_2013_2019.csv`. URLs, checksums and row counts are in [data/source_metadata.json](data/source_metadata.json).
+- The project began as IBM data science coursework on a single year of this station's data (archived in the `DAX-Weather-Project` repository) and was rebuilt with seven years of data and a rolling-origin evaluation.
+
+## Repository structure
+
 ```
-
-The script downloads the fixed 2017 source, verifies its checksum, and refuses
-to continue if the source bytes differ.
-
-## Design
-
-The 365-day series is split strictly by time: first 255 days for training, next
-54 for validation, and final 56 for a one-time test evaluation. The test segment
-is not consulted for model selection.
-
-Two prespecified candidates use annual Fourier terms with weekly
-`SARIMA(1,0,1)x(1,0,0,7)` errors. Calling this SARIMA/SARIMAX is accurate: the
-model includes an explicit seasonal autoregressive term with period seven and
-exogenous Fourier regressors. Validation RMSE selects the number of annual
-harmonics. A seven-day seasonal-naive forecast is reported throughout. Five
-expanding-window origins in the pre-test period estimate errors for horizons
-one through seven. Any lagged/rolling features are shifted before rolling, so
-they cannot contain the contemporaneous target.
-
-## Results
-
-The selected one-harmonic model produced:
-
-| Evaluation | Selected model RMSE | Seasonal-naive RMSE |
-|---|---:|---:|
-| Validation (54 days) | 6.03 °F | 7.72 °F |
-| Untouched test (56 days) | 11.38 °F | 20.10 °F |
-
-The nominal 95% model interval covered only **75%** of test observations, with
-mean width 24.65 °F. That undercoverage is a material limitation, not evidence
-of a calibrated operational interval. Pre-test rolling-origin errors by horizon
-are in [`outputs/metrics.json`](outputs/metrics.json), and row-level test
-predictions are in [`outputs/test_predictions.csv`](outputs/test_predictions.csv).
-Residuals from the final pre-test fit did not show detectable autocorrelation at
-lag 14 in this sample (Ljung-Box p=0.850), but a single nonsignificant diagnostic
-does not prove model adequacy.
-
-## Limitations and nonclaims
-
-- One station-year is too narrow for operational validation or claims about
-  other stations, years, extremes, or climate trends.
-- Aggregating to daily means discards intraday structure and extreme values.
-- The 56-day test is a single contiguous autumn/winter period; errors are not
-  independent replications.
-- The test advantage over seasonal naive is descriptive for this split, not a
-  guarantee of future performance.
-- Interval undercoverage indicates unresolved uncertainty misspecification.
-- No causal or meteorological mechanism is inferred.
+├── weather_forecasting.py             # data contract, baselines, SARIMAX, rolling forecasts, DM test
+├── run_analysis.py                    # selection on 2018, final evaluation on 2019, outputs and figures
+├── weather_forecasting_sarimax.ipynb  # walkthrough with outputs
+├── scripts/prepare_noaa_data.py       # download, checksum and daily aggregation
+├── data/                              # daily series and source metadata
+├── outputs/                           # metrics.json and row-level validation/test forecasts
+├── figures/                           # test-year results and residual diagnostics
+├── archive/                           # superseded 2017-only daily file
+└── tests/
+```
 
 ## Reproduce
 
-Python 3.11 is used in CI.
-
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python run_analysis.py
-python -m pytest -q
-jupyter nbconvert --to notebook --execute weather_forecasting_sarimax.ipynb \
-  --output /tmp/weather_forecasting_sarimax.executed.ipynb \
-  --ExecutePreprocessor.timeout=300
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python scripts/prepare_noaa_data.py   # optional: re-download and rebuild data/ (about 65 MB)
+python run_analysis.py                # about 10 seconds; rewrites outputs/ and figures/
+pytest -q
+jupyter nbconvert --to notebook --execute --inplace weather_forecasting_sarimax.ipynb
 ```
 
-`run_analysis.py` writes deterministic JSON/CSV artifacts and figures. The
-notebook is a concise, executable walkthrough over the same tested pipeline.
+## Limitations
 
-## Repository map
-
-- `weather_forecasting.py` — tested data, split, feature, model, and metric utilities
-- `scripts/prepare_noaa_data.py` — acquisition, checksum, and cleaning path
-- `run_analysis.py` — selection, backtesting, final evaluation, diagnostics, outputs
-- `tests/` — data contract, split integrity, leakage, baseline, and metric checks
-- `outputs/` — machine-readable metrics and predictions
-- `figures/` — forecast and residual-diagnostic visuals
-
-This repository is the canonical, corrected version of earlier IBM Watson
-Studio coursework retained separately in `DAX-Weather-Project` as an archive
-pointer.
+- One station and one test year, so the results may not carry over to other climates or years. Errors on consecutive days are correlated, so 359 origins carry less information than 359 independent tests.
+- The model uses past temperature alone. Operational forecasts beat climatology for a week or more because they use numerical weather prediction; this analysis measures what temperature history alone can do.
+- Error variance is assumed constant through the year. Winter intervals are too narrow (92% coverage) and summer intervals too wide (100%); a seasonal variance model would fix this.
+- The residual distribution has a heavy left tail from cold outbreaks, so the Gaussian intervals understate the chance of sharp temperature drops.
+- Daily means hide intraday extremes, which matter for some uses such as peak energy demand.
