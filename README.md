@@ -21,7 +21,7 @@ Test year 2019, scored once: 359 forecast origins, each forecasting 1 to 7 days 
 
 ## Approach
 
-- **Year-based train/validation/test split.** Parameters are estimated on 2013 to 2017, the model specification is chosen on 2018, and 2019 is used once for the final evaluation, after refitting on 2013 to 2018.
+- **Year-based train/validation/test split.** Parameters are estimated on 2013 to 2017, the model specification is chosen on 2018 and 2019 is used once for the final evaluation, after refitting on 2013 to 2018.
 - **Rolling-origin evaluation.** From every day of the evaluation year, each method forecasts 1 to 7 days ahead. Parameters stay fixed while the Kalman filter absorbs each new observation, so forecasts never use future data (a unit test checks this by tampering with future values).
 - **Dynamic regression (SARIMAX).** Annual seasonality enters as Fourier sine/cosine terms and short-term weather persistence as ARMA errors. Fifteen candidates (1 to 3 harmonics, five ARMA orders) were compared on 2018 by RMSE averaged over horizons. Fits that don't converge are excluded; all fifteen converged.
 - **Meaningful baselines.** Persistence, a 365-day seasonal naive and a Fourier climatology (harmonics also chosen on 2018). An earlier version used a 7-day seasonal naive and a weekly seasonal AR term, which were dropped: daily temperature has no weekly cycle.
