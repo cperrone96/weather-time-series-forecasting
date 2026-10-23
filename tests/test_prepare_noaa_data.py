@@ -10,7 +10,14 @@ def _raw(days: int = 3, per_day: int = 24) -> pd.DataFrame:
     rows = []
     for day in pd.date_range("2017-01-01", periods=days, freq="D"):
         for hour in range(per_day):
-            rows.append({"STATION": "74486094789", "DATE": day + pd.Timedelta(hours=hour, minutes=51), "REPORT_TYPE": "FM-15", "HourlyDryBulbTemperature": "50"})
+            rows.append(
+                {
+                    "STATION": "74486094789",
+                    "DATE": day + pd.Timedelta(hours=hour, minutes=51),
+                    "REPORT_TYPE": "FM-15",
+                    "HourlyDryBulbTemperature": "50",
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -18,9 +25,24 @@ def test_routine_hourly_drops_specials_synoptic_duplicates_and_flagged_values():
     raw = _raw(days=1)
     extra = pd.DataFrame(
         [
-            {"STATION": "74486094789", "DATE": pd.Timestamp("2017-01-01 03:00"), "REPORT_TYPE": "FM-12", "HourlyDryBulbTemperature": "90"},
-            {"STATION": "74486094789", "DATE": pd.Timestamp("2017-01-01 05:20"), "REPORT_TYPE": "FM-16", "HourlyDryBulbTemperature": "90"},
-            {"STATION": "74486094789", "DATE": pd.Timestamp("2017-01-01 06:51"), "REPORT_TYPE": "SY-MT", "HourlyDryBulbTemperature": "45s"},
+            {
+                "STATION": "74486094789",
+                "DATE": pd.Timestamp("2017-01-01 03:00"),
+                "REPORT_TYPE": "FM-12",
+                "HourlyDryBulbTemperature": "90",
+            },
+            {
+                "STATION": "74486094789",
+                "DATE": pd.Timestamp("2017-01-01 05:20"),
+                "REPORT_TYPE": "FM-16",
+                "HourlyDryBulbTemperature": "90",
+            },
+            {
+                "STATION": "74486094789",
+                "DATE": pd.Timestamp("2017-01-01 06:51"),
+                "REPORT_TYPE": "SY-MT",
+                "HourlyDryBulbTemperature": "45s",
+            },
         ]
     )
     hourly = routine_hourly(pd.concat([raw, extra], ignore_index=True))

@@ -59,7 +59,9 @@ def load_temperature_series(path: str | Path) -> pd.Series:
     if frame["mean_dry_bulb_temp_f"].isna().any():
         raise ValueError("Temperature target contains missing values")
     index = pd.DatetimeIndex(pd.to_datetime(frame["date"], errors="raise"))
-    series = pd.Series(frame["mean_dry_bulb_temp_f"].to_numpy(dtype=float), index=index, name="mean_dry_bulb_temp_f").sort_index()
+    series = pd.Series(
+        frame["mean_dry_bulb_temp_f"].to_numpy(dtype=float), index=index, name="mean_dry_bulb_temp_f"
+    ).sort_index()
     if not series.index.equals(pd.date_range(series.index.min(), series.index.max(), freq="D")):
         raise ValueError("Daily time index must be complete and consecutive")
     return series.asfreq("D")
@@ -125,12 +127,18 @@ def fit_sarimax(train: pd.Series, spec: SarimaxSpec):
     """Maximum-likelihood fit. Returns the results and whether the optimizer converged cleanly."""
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        result = SARIMAX(train, exog=fourier_terms(train.index, spec.harmonics), order=spec.order, trend="c").fit(disp=False, maxiter=500)
-    converged = bool(result.mle_retvals.get("converged", False)) and not any("converge" in str(w.message).lower() for w in caught)
+        result = SARIMAX(train, exog=fourier_terms(train.index, spec.harmonics), order=spec.order, trend="c").fit(
+            disp=False, maxiter=500
+        )
+    converged = bool(result.mle_retvals.get("converged", False)) and not any(
+        "converge" in str(w.message).lower() for w in caught
+    )
     return result, converged
 
 
-def sarimax_rolling(result, spec: SarimaxSpec, series: pd.Series, origins: pd.DatetimeIndex, horizon: int, alpha: float = 0.05) -> RollingForecast:
+def sarimax_rolling(
+    result, spec: SarimaxSpec, series: pd.Series, origins: pd.DatetimeIndex, horizon: int, alpha: float = 0.05
+) -> RollingForecast:
     """Rolling 1..H-day forecasts with parameters fixed at their training estimates.
 
     ``apply`` re-runs the Kalman filter over ``series`` with the fitted

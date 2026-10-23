@@ -84,7 +84,9 @@ def test_sarimax_rolling_forecasts_never_see_the_future():
     tampered = s.copy()
     tampered.iloc[811:] += 50  # change only values after the first origin's targets begin
     changed = sarimax_rolling(result, spec, tampered, origins, 7)
-    assert np.allclose(clean.mean[0], changed.mean[0])  # origin day 800: all targets <= 807 are forecasts, inputs <= 800
+    assert np.allclose(
+        clean.mean[0], changed.mean[0]
+    )  # origin day 800: all targets <= 807 are forecasts, inputs <= 800
     assert np.all(clean.lower < clean.mean) and np.all(clean.mean < clean.upper)
 
 

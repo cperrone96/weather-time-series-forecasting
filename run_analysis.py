@@ -40,8 +40,15 @@ FIGURE_DIR = ROOT / "figures"
 HORIZON = 7
 VALIDATION_YEAR, TEST_YEAR = 2018, 2019
 CLIMATOLOGY_HARMONICS = (1, 2, 3)
-SARIMAX_GRID = [SarimaxSpec(k, order) for k, order in product((1, 2, 3), ((1, 0, 0), (2, 0, 0), (3, 0, 0), (1, 0, 1), (2, 0, 1)))]
-LABELS = {"sarimax": "SARIMAX (selected)", "persistence": "Persistence", "seasonal_naive": "Seasonal naive (same day last year)", "climatology": "Climatology"}
+SARIMAX_GRID = [
+    SarimaxSpec(k, order) for k, order in product((1, 2, 3), ((1, 0, 0), (2, 0, 0), (3, 0, 0), (1, 0, 1), (2, 0, 1)))
+]
+LABELS = {
+    "sarimax": "SARIMAX (selected)",
+    "persistence": "Persistence",
+    "seasonal_naive": "Seasonal naive (same day last year)",
+    "climatology": "Climatology",
+}
 COLORS = {"sarimax": "#2a6fb0", "persistence": "#d1495b", "seasonal_naive": "#7a9e3a", "climatology": "#e09f3e"}
 
 
@@ -62,14 +69,23 @@ def long_table(series: pd.Series, forecasts: dict[str, RollingForecast]) -> pd.D
     for method, fc in forecasts.items():
         for i, origin in enumerate(fc.origins):
             for h in range(HORIZON):
-                row = {"method": method, "origin": origin.date().isoformat(), "horizon_day": h + 1, "target_date": (origin + pd.Timedelta(days=h + 1)).date().isoformat(), "actual_f": observed[i, h], "forecast_f": fc.mean[i, h]}
+                row = {
+                    "method": method,
+                    "origin": origin.date().isoformat(),
+                    "horizon_day": h + 1,
+                    "target_date": (origin + pd.Timedelta(days=h + 1)).date().isoformat(),
+                    "actual_f": observed[i, h],
+                    "forecast_f": fc.mean[i, h],
+                }
                 if fc.lower is not None:
                     row["lower_95_f"], row["upper_95_f"] = fc.lower[i, h], fc.upper[i, h]
                 rows.append(row)
     return pd.DataFrame(rows)
 
 
-def baselines(series: pd.Series, fit_window: pd.Series, origins: pd.DatetimeIndex, harmonics: int) -> dict[str, RollingForecast]:
+def baselines(
+    series: pd.Series, fit_window: pd.Series, origins: pd.DatetimeIndex, harmonics: int
+) -> dict[str, RollingForecast]:
     clim_fit = fit_climatology(fit_window, harmonics)
     return {
         "persistence": persistence(series, origins, HORIZON),
@@ -78,7 +94,9 @@ def baselines(series: pd.Series, fit_window: pd.Series, origins: pd.DatetimeInde
     }
 
 
-def plot_results(series: pd.Series, test_scores: dict[str, list[float]], test_fc: dict[str, RollingForecast], path: Path) -> None:
+def plot_results(
+    series: pd.Series, test_scores: dict[str, list[float]], test_fc: dict[str, RollingForecast], path: Path
+) -> None:
     import matplotlib
 
     matplotlib.use("Agg")
@@ -88,7 +106,12 @@ def plot_results(series: pd.Series, test_scores: dict[str, list[float]], test_fc
     days = np.arange(1, HORIZON + 1)
     for method in ("persistence", "seasonal_naive", "climatology", "sarimax"):
         ax_h.plot(days, test_scores[method], "o-", color=COLORS[method], lw=2, label=LABELS[method])
-    ax_h.set(xlabel="Forecast horizon (days ahead)", ylabel="RMSE (°F)", title=f"Test-year error by horizon ({TEST_YEAR})", xticks=days)
+    ax_h.set(
+        xlabel="Forecast horizon (days ahead)",
+        ylabel="RMSE (°F)",
+        title=f"Test-year error by horizon ({TEST_YEAR})",
+        xticks=days,
+    )
     ax_h.set_ylim(bottom=0)
     ax_h.legend(frameon=False, fontsize=9, loc="lower right")
 
@@ -96,9 +119,24 @@ def plot_results(series: pd.Series, test_scores: dict[str, list[float]], test_fc
     window = (sar.origins >= f"{TEST_YEAR}-01-01") & (sar.origins < f"{TEST_YEAR}-04-01")
     target = sar.origins[window] + pd.Timedelta(days=1)
     ax_t.plot(series.loc[target].index, series.loc[target], color="#222222", lw=1.6, label="Observed daily mean")
-    ax_t.fill_between(target, sar.lower[window, 0], sar.upper[window, 0], color=COLORS["sarimax"], alpha=0.2, lw=0, label="95% prediction interval")
+    ax_t.fill_between(
+        target,
+        sar.lower[window, 0],
+        sar.upper[window, 0],
+        color=COLORS["sarimax"],
+        alpha=0.2,
+        lw=0,
+        label="95% prediction interval",
+    )
     ax_t.plot(target, sar.mean[window, 0], color=COLORS["sarimax"], lw=1.6, label="SARIMAX, 1 day ahead")
-    ax_t.plot(target, test_fc["climatology"].mean[window, 0], color=COLORS["climatology"], lw=1.4, ls="--", label="Climatology")
+    ax_t.plot(
+        target,
+        test_fc["climatology"].mean[window, 0],
+        color=COLORS["climatology"],
+        lw=1.4,
+        ls="--",
+        label="Climatology",
+    )
     ax_t.set(ylabel="Daily mean temperature (°F)", title=f"One-day-ahead forecasts, Jan to Mar {TEST_YEAR}")
     ax_t.legend(frameon=False, fontsize=9, loc="upper left", ncol=2)
     for ax in (ax_h, ax_t):
@@ -138,7 +176,12 @@ def main() -> dict:
     # 1. Selection on the validation year (parameters estimated on training years only).
     val_origins = evaluation_origins(series, validation, HORIZON)
     val_actual = actuals(series, val_origins, HORIZON)
-    clim_scores = {k: float(rmse_by_horizon(val_actual, climatology(fit_climatology(train, k), k, val_origins, HORIZON).mean).mean()) for k in CLIMATOLOGY_HARMONICS}
+    clim_scores = {
+        k: float(
+            rmse_by_horizon(val_actual, climatology(fit_climatology(train, k), k, val_origins, HORIZON).mean).mean()
+        )
+        for k in CLIMATOLOGY_HARMONICS
+    }
     clim_k = min(clim_scores, key=clim_scores.get)
     candidates, val_forecasts = [], {}
     for spec in SARIMAX_GRID:
@@ -159,7 +202,10 @@ def main() -> dict:
     final, final_converged = fit_sarimax(pretest, selected)
     test_origins = evaluation_origins(series, test, HORIZON)
     test_actual = actuals(series, test_origins, HORIZON)
-    test_fc = {"sarimax": sarimax_rolling(final, selected, series, test_origins, HORIZON), **baselines(series, pretest, test_origins, clim_k)}
+    test_fc = {
+        "sarimax": sarimax_rolling(final, selected, series, test_origins, HORIZON),
+        **baselines(series, pretest, test_origins, clim_k),
+    }
     long_table(series, test_fc).to_csv(OUTPUT_DIR / "test_predictions.csv", index=False, float_format="%.4f")
 
     test_rmse = {m: rmse_by_horizon(test_actual, fc.mean) for m, fc in test_fc.items()}
@@ -172,7 +218,9 @@ def main() -> dict:
     tests = []
     for baseline in ("persistence", "climatology"):
         for h in range(HORIZON):
-            dm = diebold_mariano(test_actual[:, h] - sar.mean[:, h], test_actual[:, h] - test_fc[baseline].mean[:, h], h + 1)
+            dm = diebold_mariano(
+                test_actual[:, h] - sar.mean[:, h], test_actual[:, h] - test_fc[baseline].mean[:, h], h + 1
+            )
             tests.append({"versus": baseline, "horizon_day": h + 1, **{k: sig(v) for k, v in dm.items()}})
     for row, adjusted in zip(tests, holm_adjust([t["p_value"] for t in tests])):
         row["holm_adjusted_p_value"] = sig(adjusted)
@@ -182,7 +230,12 @@ def main() -> dict:
     ljung = acorr_ljungbox(residuals, lags=[7, 14], return_df=True)
 
     metrics = {
-        "data": {"days": len(series), "start": series.index.min().date().isoformat(), "end": series.index.max().date().isoformat(), "unit": "calendar-day mean of routine hourly dry-bulb temperature, °F"},
+        "data": {
+            "days": len(series),
+            "start": series.index.min().date().isoformat(),
+            "end": series.index.max().date().isoformat(),
+            "unit": "calendar-day mean of routine hourly dry-bulb temperature, °F",
+        },
         "design": {
             "train_years": [int(train.index.year.min()), int(train.index.year.max())],
             "validation_year": VALIDATION_YEAR,
@@ -196,9 +249,17 @@ def main() -> dict:
         "validation": {
             "sarimax_candidates": candidates,
             "climatology_harmonics_rmse_f": clim_scores,
-            "baselines_rmse_by_horizon_f": {m: r4(rmse_by_horizon(val_actual, fc.mean)) for m, fc in val_all.items() if m != "sarimax"},
+            "baselines_rmse_by_horizon_f": {
+                m: r4(rmse_by_horizon(val_actual, fc.mean)) for m, fc in val_all.items() if m != "sarimax"
+            },
         },
-        "selected": {"model": selected.name, "harmonics": selected.harmonics, "order": list(selected.order), "climatology_harmonics": clim_k, "final_fit_converged": final_converged},
+        "selected": {
+            "model": selected.name,
+            "harmonics": selected.harmonics,
+            "order": list(selected.order),
+            "climatology_harmonics": clim_k,
+            "final_fit_converged": final_converged,
+        },
         "test": {
             "rmse_by_horizon_f": {m: r4(v) for m, v in test_rmse.items()},
             "mae_by_horizon_f": {m: r4(v) for m, v in test_mae.items()},
@@ -206,7 +267,9 @@ def main() -> dict:
             "skill_vs_persistence_by_horizon": r4(1 - test_rmse["sarimax"] / test_rmse["persistence"]),
             "sarimax_interval_95_coverage_by_horizon": r4(inside.mean(axis=0)),
             "sarimax_interval_95_mean_width_by_horizon_f": r4((sar.upper - sar.lower).mean(axis=0)),
-            "sarimax_interval_95_coverage_by_season": {name: round(float(inside[np.isin(target_months, months)].mean()), 4) for name, months in seasons.items()},
+            "sarimax_interval_95_coverage_by_season": {
+                name: round(float(inside[np.isin(target_months, months)].mean()), 4) for name, months in seasons.items()
+            },
             "diebold_mariano": tests,
         },
         "diagnostics": {

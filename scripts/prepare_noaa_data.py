@@ -57,9 +57,13 @@ def routine_hourly(raw: pd.DataFrame) -> pd.Series:
         raise ValueError("Unexpected station identifier")
     frame = raw.assign(
         DATE=pd.to_datetime(raw["DATE"], errors="raise"),
-        temperature_f=pd.to_numeric(raw["HourlyDryBulbTemperature"], errors="coerce"),  # flagged values such as "45s" become NaN
+        temperature_f=pd.to_numeric(
+            raw["HourlyDryBulbTemperature"], errors="coerce"
+        ),  # flagged values such as "45s" become NaN
     )
-    frame = frame.loc[frame["REPORT_TYPE"].astype(str).str.strip().isin(ROUTINE_REPORT_TYPES) & frame["temperature_f"].notna()]
+    frame = frame.loc[
+        frame["REPORT_TYPE"].astype(str).str.strip().isin(ROUTINE_REPORT_TYPES) & frame["temperature_f"].notna()
+    ]
     return frame.groupby(frame["DATE"].dt.floor("h"))["temperature_f"].first()
 
 
@@ -72,8 +76,12 @@ def prepare_daily_data(hourly: pd.Series, start: str, end: str) -> pd.DataFrame:
     below_minimum = daily.index[daily["count"] < MIN_DAILY_OBSERVATIONS]
     if len(below_minimum):
         dates = ", ".join(day.date().isoformat() for day in below_minimum[:5])
-        raise ValueError(f"Every day must have at least {MIN_DAILY_OBSERVATIONS} valid hourly observations; below-threshold dates include: {dates}")
-    cleaned = daily.rename(columns={"mean": "mean_dry_bulb_temp_f", "count": "observation_count"}).reset_index(names="date")
+        raise ValueError(
+            f"Every day must have at least {MIN_DAILY_OBSERVATIONS} valid hourly observations; below-threshold dates include: {dates}"
+        )
+    cleaned = daily.rename(columns={"mean": "mean_dry_bulb_temp_f", "count": "observation_count"}).reset_index(
+        names="date"
+    )
     cleaned["date"] = cleaned["date"].dt.strftime("%Y-%m-%d")
     return cleaned
 
@@ -95,7 +103,9 @@ def main() -> None:
         observed = sha256(path)
         if observed != expected:
             raise ValueError(f"{year}: checksum mismatch (expected {expected}, got {observed})")
-        raw = pd.read_csv(path, usecols=["STATION", "DATE", "REPORT_TYPE", "HourlyDryBulbTemperature"], low_memory=False)
+        raw = pd.read_csv(
+            path, usecols=["STATION", "DATE", "REPORT_TYPE", "HourlyDryBulbTemperature"], low_memory=False
+        )
         raw_rows += len(raw)
         hourly_parts.append(routine_hourly(raw))
         sources.append({"year": year, "url": url, "sha256": observed, "rows": int(len(raw))})
