@@ -17,9 +17,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
+import ssl
 import urllib.request
 from pathlib import Path
 
+import certifi
 import pandas as pd
 
 STATION_ID = "74486094789"
@@ -45,6 +48,13 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def download(url: str, path: Path) -> None:
+    """Fetch ``url`` to ``path`` using certifi's CA bundle (works where the system store is not configured)."""
+    context = ssl.create_default_context(cafile=certifi.where())
+    with urllib.request.urlopen(url, context=context) as response, path.open("wb") as handle:
+        shutil.copyfileobj(response, handle)
 
 
 def routine_hourly(raw: pd.DataFrame) -> pd.Series:
@@ -99,7 +109,7 @@ def main() -> None:
         path = args.raw_dir / f"{STATION_ID}_{year}.csv"
         url = URL_TEMPLATE.format(year=year)
         if not path.exists():
-            urllib.request.urlretrieve(url, path)
+            download(url, path)
         observed = sha256(path)
         if observed != expected:
             raise ValueError(f"{year}: checksum mismatch (expected {expected}, got {observed})")
