@@ -33,7 +33,7 @@ Test year 2019, scored once: 359 forecast origins, each forecasting 1 to 7 days 
 - **Source:** NOAA National Centers for Environmental Information, [Local Climatological Data](https://www.ncei.noaa.gov/products/land-based-station/local-climatological-data), station 74486094789 (JFK International Airport, NY), yearly files for 2013 to 2019. U.S. government data, free to use.
 - **Unit of analysis:** one calendar day, January 1, 2013 to December 31, 2019 (2,556 days). The value is the mean dry-bulb temperature (°F) of the routine hourly reports, one per clock hour (61,341 hourly readings). Special reports, which cluster in bad weather, and duplicate synoptic reports are excluded so they don't over-weight particular hours. Every day has at least 23 valid hourly readings; nothing is imputed.
 - `scripts/prepare_noaa_data.py` downloads the seven source files, verifies their SHA-256 checksums and rebuilds `data/jfk_daily_temperature_2013_2019.csv`. URLs, checksums and row counts are in [data/source_metadata.json](data/source_metadata.json).
-- The project began as IBM data science coursework on a single year of this station's data (archived in the `DAX-Weather-Project` repository) and was rebuilt with seven years of data and a rolling-origin evaluation.
+- The project began as IBM data science coursework on a single year of this station's data and was rebuilt with seven years of data and a rolling-origin evaluation.
 
 ## Repository structure
 
